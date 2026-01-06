@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caminito - ChatBot Reservas</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 400px;
+      height: 600px;
+      background: #f0f2f5;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #f97316, #facc15);
+      padding: 20px;
+      text-align: center;
+      color: white;
+    }
+
+    .chat-header h1 { font-size: 1.3rem; margin-bottom: 4px; }
+    .chat-header p { font-size: 0.85rem; opacity: 0.9; }
+
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f0f2f5;
+    }
+
+    .message { margin-bottom: 16px; display: flex; gap: 12px; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .message.bot { justify-content: flex-start; }
+    .message.user { justify-content: flex-end; }
+
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; font-size: 0.9rem;
+    }
+
+    .avatar.bot { background: linear-gradient(135deg, #f97316, #facc15); color: white; }
+    .avatar.user { background: #007bff; color: white; }
+
+    .message-content {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 20px;
+      word-wrap: break-word;
+      font-size: 0.95rem;
+    }
+
+    .message.bot .message-content { background: white; border-bottom-left-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .message.user .message-content { background: #007bff; color: white; border-bottom-right-radius: 4px; }
+
+    .options { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .option-btn {
+      background: white; border: none; padding: 12px 16px;
+      border-radius: 20px; cursor: pointer; text-align: left;
+      font-size: 0.95rem; transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .option-btn:hover { background: #e8f4fd; transform: translateY(-1px); }
+
+    .input-area { padding: 16px 20px 20px; background: white; border-top: 1px solid #e5e7eb; }
+    .input-wrapper { display: flex; gap: 12px; }
+
+    #messageInput {
+      flex: 1; padding: 12px 16px; border: 1px solid #d1d5db;
+      border-radius: 24px; outline: none; font-size: 0.95rem;
+    }
+
+    #sendBtn {
+      width: 44px; height: 44px; border: none; border-radius: 50%;
+      background: linear-gradient(135deg, #f97316, #facc15);
+      color: white; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+    }
+
+    .date-input {
+      width: 100%; margin-top: 10px; padding: 10px;
+      border-radius: 15px; border: 1px solid #f97316;
+      font-family: inherit; outline: none;
+    }
+
+    .typing { display: flex; align-items: center; gap: 4px; padding: 12px 16px; background: white; border-radius: 20px; border-bottom-left-radius: 4px; max-width: 50px; }
+    .typing-dot { width: 6px; height: 6px; border-radius: 50%; background: #6b7280; animation: typing 1.4s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing { 0%, 60%, 100% { transform: scale(1); opacity: 0.4; } 30% { transform: scale(1.2); opacity: 1; } }
+
+    /* Estilo mejorado para el botón de WhatsApp */
+    .whatsapp-btn {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+      color: white !important;
+      text-align: center !important;
+      font-weight: bold !important;
+      text-decoration: none;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px !important;
+      border-radius: 20px;
+      margin-top: 15px;
+      box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+      transition: all 0.3s ease;
+      animation: pulse-green 2s infinite;
+    }
+
+    .whatsapp-btn:hover {
+      transform: scale(1.03);
+      box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+    }
+
+    /* Icono de WhatsApp simple mediante SVG */
+    .wa-icon {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+      <h1>🍽️ Caminito</h1>
+      <p>Asistente de Reservas</p>
+    </div>
+
+    <div class="messages" id="messages"></div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <input type="text" id="messageInput" placeholder="Escribe aquí..." autocomplete="off" />
+        <button id="sendBtn">➤</button>
+      </div>
+    </div>
+</div>
+
+<script>
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+    
+        let currentState = 'welcome';
+        let reservaData = { cedula: '', nombre: '', personas: '', fecha: '' };
+    
+        function addMessage(text, sender, options = null) {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = `message ${sender}`;
+          messageDiv.innerHTML = `
+            <div class="avatar ${sender}">${sender === 'bot' ? '🤖' : '👤'}</div>
+            <div class="message-content">
+                ${text}
+                ${options ? `<div class="options">` + options.map(opt => `<button class="option-btn" onclick="handleOption('${opt.next}', '${opt.text}')">${opt.text}</button>`).join('') + `</div>` : ''}
+            </div>
+          `;
+          messagesContainer.appendChild(messageDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    
+        function showTyping() {
+          const div = document.createElement('div');
+          div.className = 'message bot typing-msg';
+          div.innerHTML = `<div class="avatar bot">🤖</div><div class="typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+          messagesContainer.appendChild(div);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          return div;
+        }
+    
+        function handleOption(nextState, optText) {
+          addMessage(optText, 'user');
+          currentState = nextState;
+          showBotMessage();
+        }
+    
+        function handleUserMessage(text) {
+          addMessage(text, 'user');
+          showBotMessage(text);
+        }
+    
+        function showBotMessage(userInput = '') {
+          const typing = showTyping();
+          setTimeout(() => {
+            typing.remove();
+            if (currentState === 'welcome') {
+              addMessage("¡Hola! 👋 Bienvenido a **Caminito**. ¿En qué puedo ayudarte?", 'bot', [{ text: "📅 Realizar nueva reserva", next: 'pedirCedula' }]);
+            } 
+            else if (currentState === 'pedirCedula') {
+              addMessage("¡Perfecto! Para comenzar, ingresa tu **número de cédula**:", 'bot');
+              currentState = 'validarCedula';
+            }
+            else if (currentState === 'validarCedula') {
+              reservaData.cedula = userInput;
+              addMessage("Gracias. Ahora, dime tu **nombre completo**:", 'bot');
+              currentState = 'pedirNombre';
+            }
+            else if (currentState === 'pedirNombre') {
+              reservaData.nombre = userInput;
+              addMessage(`**${reservaData.nombre}**, ¿con cuántas personas vas a venir?`, 'bot');
+              currentState = 'pedirPersonas';
+            }
+            else if (currentState === 'pedirPersonas') {
+              reservaData.personas = userInput;
+              addMessage("Excelente. Selecciona la **fecha y hora**:", 'bot');
+              const dt = document.createElement('input');
+              dt.type = 'datetime-local';
+              dt.className = 'date-input';
+              dt.onchange = (e) => {
+                reservaData.fecha = e.target.value.replace('T', ' ');
+                addMessage(reservaData.fecha, 'user');
+                dt.remove();
+                finalizar();
+              };
+              messagesContainer.appendChild(dt);
+            }
+          }, 1000);
+        }
+    function finalizar() {
+      const typing = showTyping();
+      setTimeout(() => {
+        typing.remove();
+        addMessage(`✅ **Reserva Confirmada**<br><br>👤 Cliente: ${reservaData.nombre}<br>👥 Personas: ${reservaData.personas}<br>📅 Fecha: ${reservaData.fecha}`, 'bot');
+        
+        const tel = "593987821257"; 
+        const txt = encodeURIComponent(`Hola Caminito, confirmo mi reserva:\n\nNombre: ${reservaData.nombre}\nCédula: ${reservaData.cedula}\nPersonas: ${reservaData.personas}\nFecha: ${reservaData.fecha}`);
+        const link = `https://wa.me/${tel}?text=${txt}`;
+        
+        // Creamos el botón con el nuevo estilo e icono
+        const btnContainer = document.createElement('div');
+        btnContainer.innerHTML = `
+          <a href="${link}" target="_blank" class="whatsapp-btn">
+            <svg class="wa-icon" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Confirmar por WhatsApp
+          </a>
+        `;
+        
+        // Lo añadimos al final de los mensajes
+        messagesContainer.appendChild(btnContainer);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }, 1000);
+    }
+    
+        sendBtn.onclick = () => {
+          const text = messageInput.value.trim();
+          if (text) { handleUserMessage(text); messageInput.value = ''; }
+        };
+        messageInput.onkeypress = (e) => { if (e.key === 'Enter') sendBtn.click(); };
+    
+        showBotMessage();
+      </script>
+</body>
+</html>
